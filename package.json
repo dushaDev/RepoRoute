@@ -9,12 +9,12 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@base-ui/react": "^1.2.0",
-    "@gitgraph/react": "^1.6.0",
+    "@radix-ui/react-slot": "^1.2.4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.577.0",
     "next": "16.1.6",
+    "next-themes": "^0.4.6",
     "octokit": "^5.0.5",
     "react": "19.2.3",
     "react-dom": "19.2.3",

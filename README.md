@@ -1,36 +1,55 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Repo Route 🗺️
 
-## Getting Started
+**Repo Route** is an interactive, horizontal Git graph visualization tool built to explore the history of public GitHub repositories in an elegant, ultra-dense format.
 
-First, run the development server:
+Watch the repository's architecture unfold with up to 50 active branches and 2,000 commits mapped together in a single breathtaking scrollable view!
 
+---
+
+## 🚀 Features
+- **Ultra-Compact Visualization**: A custom SVG-rendered timeline squeezed for maximum data density. See hundreds of commits without losing track of the bigger picture.
+- **Smart Branch Tracking**: Dynamically tracks branch divergence, merges, and traces paths back to the `main` or `master` trunk.
+- **Rich Interactive Tooltips**: Hover over any commit node to reveal a beautiful glassmorphism popup containing the commit SHA, author, date, and full commit message.
+- **Lane Highlighting**: Hover over a branch name in the sidebar to instantly highlight its entire flow line while fading out the rest of the noise.
+- **Smart Data Fetching**: By default, it uses the public GitHub API to fetch data instantly.
+- **Dark Mode by Default**: A premium, sleek aesthetic designed to be easy on the eyes.
+
+## 🛠️ Tech Stack
+- **Framework**: [Next.js](https://nextjs.org/) (App Router)
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS & shadcn/ui
+- **Icons**: Lucide React
+- **Data Source**: GitHub REST API (`@octokit/rest`)
+
+## 💻 Getting Started
+
+### 1. Clone & Install
+```bash
+git clone https://github.com/dushadev/RepoRoute.git
+cd RepoRoute
+npm install
+```
+
+### 2. (Optional but Highly Recommended) Add GitHub Token
+To visualize massive repositories (like react or next.js) without hitting the public GitHub API rate limit (60 requests/hour), you should add a Personal Access Token.
+
+Create a `.env.local` file in the root directory:
+```env
+NEXT_PUBLIC_GITHUB_TOKEN=your_github_personal_access_token_here
+```
+*Note: `.env.local` is ignored by git, so your token stays safe on your machine.*
+
+### 3. Run the Development Server
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 📸 Usage
+1. Enter any public GitHub repository URL (e.g., `https://github.com/facebook/react`) or shorthand (e.g., `facebook/react`) into the search bar.
+2. Click **Visualize**.
+3. Scroll horizontally to explore the timeline!
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+© 2026 Dushan. All rights reserved. • [Developer Portfolio](https://dushadev.github.io/)
