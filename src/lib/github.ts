@@ -30,6 +30,9 @@ export interface GitCommit {
   author: string;
   date: string;
   parents: string[];
+  isMerge?: boolean;
+  prNumber?: string;
+  sourceBranch?: string;
 }
 
 export interface GitBranch {
