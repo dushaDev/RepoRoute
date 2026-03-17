@@ -104,30 +104,31 @@ export default function Home() {
 
         {repoData && (
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-700 ease-out">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-4 border-b">
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <h2 className="text-5xl font-black tracking-tighter text-foreground">{repoData.repo}</h2>
-                  {repoData.owner === "local" ? (
-                    <span className="px-3 py-1 bg-secondary/20 text-secondary-foreground text-[10px] font-black uppercase tracking-widest rounded-full border border-border">Local Machine</span>
-                  ) : (
-                    <span className="px-3 py-1 bg-primary/10 text-primary text-[10px] font-black uppercase tracking-widest rounded-full border border-primary/20">Public</span>
-                  )}
-                </div>
-                <p className="text-xl text-muted-foreground font-medium flex items-center gap-2">
-                  <span className="opacity-50">by</span>
-                  <span className="hover:text-primary cursor-default transition-colors">{repoData.owner}</span>
-                </p>
+            <div className="flex items-center gap-4 flex-wrap pb-3 border-b">
+              {/* Repo name + badge */}
+              <div className="flex items-center gap-2.5 min-w-0">
+                <h2 className="text-2xl font-black tracking-tight text-foreground truncate">{repoData.repo}</h2>
+                {repoData.owner === "local" ? (
+                  <span className="shrink-0 px-2 py-0.5 bg-secondary/20 text-secondary-foreground text-[9px] font-black uppercase tracking-widest rounded-full border border-border">Local</span>
+                ) : (
+                  <span className="shrink-0 px-2 py-0.5 bg-primary/10 text-primary text-[9px] font-black uppercase tracking-widest rounded-full border border-primary/20">Public</span>
+                )}
+                <span className="text-sm text-muted-foreground/50 font-medium">by <span className="text-muted-foreground">{repoData.owner}</span></span>
               </div>
-              <div className="flex items-center gap-6 p-4 bg-muted/50 rounded-2xl border backdrop-blur-sm self-start md:self-auto">
-                <div className="text-center group">
-                  <p className="text-2xl font-black tracking-tighter group-hover:text-primary transition-colors">{repoData.commits.length}</p>
-                  <p className="text-[10px] uppercase font-black tracking-tighter text-muted-foreground/60">Commits</p>
+
+              {/* Spacer */}
+              <div className="flex-1" />
+
+              {/* Stats inline */}
+              <div className="flex items-center gap-3 text-sm bg-muted/40 rounded-xl px-4 py-2 border">
+                <div className="flex items-center gap-1.5">
+                  <span className="font-black text-foreground">{repoData.commits.length.toLocaleString()}</span>
+                  <span className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground/60">Commits</span>
                 </div>
-                <div className="h-8 w-[2px] bg-border transition-transform scale-y-110"></div>
-                <div className="text-center group">
-                  <p className="text-2xl font-black tracking-tighter group-hover:text-primary transition-colors">{repoData.branches.length}</p>
-                  <p className="text-[10px] uppercase font-black tracking-tighter text-muted-foreground/60">Branches</p>
+                <div className="w-px h-4 bg-border" />
+                <div className="flex items-center gap-1.5">
+                  <span className="font-black text-foreground">{repoData.branches.length}</span>
+                  <span className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground/60">Branches</span>
                 </div>
               </div>
             </div>
