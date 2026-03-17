@@ -49,7 +49,6 @@ npm install
 Create a `.env.local` file in the root of the project:
 
 ```env
-GITHUB_TOKEN=your_github_personal_access_token_here
 NEXT_PUBLIC_GITHUB_TOKEN=your_github_personal_access_token_here
 ```
 
