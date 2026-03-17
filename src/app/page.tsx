@@ -5,7 +5,7 @@ import { RepoSearch } from "@/components/RepoSearch";
 import { CommitGraph } from "@/components/CommitGraph";
 import { fetchRepoData, RepoData } from "@/lib/github";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Github, History, AlertCircle, Info, ExternalLink } from "lucide-react";
+import { Github, History, AlertCircle, Info, ExternalLink, FolderGit2 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ModeToggle } from "@/components/mode-toggle";
 
@@ -14,11 +14,21 @@ export default function Home() {
   const [repoData, setRepoData] = useState<RepoData | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSearch = async (url: string) => {
+  const handleSearch = async (input: string, mode: "github" | "local" = "github") => {
     setLoading(true);
     setError(null);
     try {
-      const data = await fetchRepoData(url);
+      let data;
+      if (mode === "github") {
+        data = await fetchRepoData(input);
+      } else {
+        const res = await fetch(`/api/local-repo?path=${encodeURIComponent(input)}`);
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.error || `Server responded with ${res.status}`);
+        }
+        data = await res.json();
+      }
       setRepoData(data);
     } catch (err: any) {
       setError(err.message || "An unexpected error occurred.");
@@ -66,7 +76,7 @@ export default function Home() {
             <div className="max-w-xl space-y-4">
               <h2 className="text-4xl font-extrabold tracking-tight sm:text-5xl">Ready to explore?</h2>
               <p className="text-lg text-muted-foreground font-medium leading-relaxed">
-                Connect your engineering team's history. Paste a public GitHub repository URL or enter "owner/repo" to visualize its architecture.
+                Connect your engineering team's history. Paste a public GitHub repository URL or select your local project folder to visualize its architecture.
               </p>
             </div>
           </div>
@@ -98,7 +108,11 @@ export default function Home() {
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
                   <h2 className="text-5xl font-black tracking-tighter text-foreground">{repoData.repo}</h2>
-                  <span className="px-3 py-1 bg-primary/10 text-primary text-[10px] font-black uppercase tracking-widest rounded-full border border-primary/20">Public</span>
+                  {repoData.owner === "local" ? (
+                    <span className="px-3 py-1 bg-secondary/20 text-secondary-foreground text-[10px] font-black uppercase tracking-widest rounded-full border border-border">Local Machine</span>
+                  ) : (
+                    <span className="px-3 py-1 bg-primary/10 text-primary text-[10px] font-black uppercase tracking-widest rounded-full border border-primary/20">Public</span>
+                  )}
                 </div>
                 <p className="text-xl text-muted-foreground font-medium flex items-center gap-2">
                   <span className="opacity-50">by</span>
@@ -142,28 +156,58 @@ export default function Home() {
                 <CardHeader className="bg-muted/10 p-5 border-b">
                   <CardTitle className="text-lg font-bold flex items-center gap-2">
                     <Info className="h-5 w-5 text-primary" />
-                    Insight Panel
+                    Repository Insights
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-6">
-                  <div className="grid grid-cols-2 gap-8">
-                    <div className="space-y-1 group">
-                      <p className="text-[11px] uppercase font-black tracking-widest text-muted-foreground/60 group-hover:text-primary transition-colors">Endpoint Status</p>
-                      <p className="text-lg font-bold text-foreground">API Sync Operational</p>
-                    </div>
-                    <div className="space-y-1 group">
-                      <p className="text-[11px] uppercase font-black tracking-widest text-muted-foreground/60 group-hover:text-primary transition-colors">Data Freshness</p>
-                      <p className="text-lg font-bold text-foreground">Real-time Fetch</p>
-                    </div>
-                    <div className="space-y-1 group">
-                      <p className="text-[11px] uppercase font-black tracking-widest text-muted-foreground/60 group-hover:text-primary transition-colors">Visualization Mode</p>
-                      <p className="text-lg font-bold text-foreground">Horizontal Lane Flow</p>
-                    </div>
-                    <div className="space-y-1 group">
-                      <p className="text-[11px] uppercase font-black tracking-widest text-muted-foreground/60 group-hover:text-primary transition-colors">Structure Complexity</p>
-                      <p className="text-lg font-bold text-foreground">Adaptive Mapping</p>
-                    </div>
-                  </div>
+                  {(() => {
+                    const commits = repoData.commits;
+                    const branches = repoData.branches;
+
+                    const uniqueAuthors = new Set(commits.map(c => c.author)).size;
+                    const mergeCommits = commits.filter(c => c.isMerge).length;
+                    const prMerges = commits.filter(c => c.prNumber).length;
+
+                    // Most active contributor
+                    const authorCounts = commits.reduce<Record<string, number>>((acc, c) => {
+                      acc[c.author] = (acc[c.author] || 0) + 1;
+                      return acc;
+                    }, {});
+                    const topAuthor = Object.entries(authorCounts).sort((a, b) => b[1] - a[1])[0];
+
+                    // Date range
+                    const dates = commits.map(c => new Date(c.date).getTime()).filter(Boolean);
+                    const earliest = dates.length ? new Date(Math.min(...dates)) : null;
+                    const latest = dates.length ? new Date(Math.max(...dates)) : null;
+                    const daySpan = earliest && latest ? Math.round((latest.getTime() - earliest.getTime()) / (1000 * 60 * 60 * 24)) : 0;
+
+                    const avgCommitsPerBranch = branches.length > 0 ? (commits.length / branches.length).toFixed(1) : '–';
+
+                    const stats = [
+                      { label: "Total Commits", value: commits.length.toLocaleString() },
+                      { label: "Branches", value: branches.length },
+                      { label: "Unique Authors", value: uniqueAuthors },
+                      { label: "Merge Commits", value: mergeCommits },
+                      { label: "Pull Requests", value: prMerges },
+                      { label: "Top Contributor", value: topAuthor ? topAuthor[0] : '–', sub: topAuthor ? `${topAuthor[1]} commits` : '' },
+                      { label: "Activity Span", value: `${daySpan} days` },
+                      { label: "Avg Commits / Branch", value: avgCommitsPerBranch },
+                      { label: "First Commit", value: earliest ? earliest.toLocaleDateString() : '–' },
+                      { label: "Latest Commit", value: latest ? latest.toLocaleDateString() : '–' },
+                    ];
+
+                    return (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
+                        {stats.map(stat => (
+                          <div key={stat.label} className="space-y-0.5 group">
+                            <p className="text-[10px] uppercase font-black tracking-widest text-muted-foreground/60 group-hover:text-primary transition-colors">{stat.label}</p>
+                            <p className="text-base font-bold text-foreground truncate">{stat.value}</p>
+                            {stat.sub && <p className="text-[10px] text-muted-foreground/50">{stat.sub}</p>}
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
                 </CardContent>
               </Card>
 
@@ -172,23 +216,94 @@ export default function Home() {
                   <CardTitle className="text-lg font-bold">Deep Dive</CardTitle>
                 </CardHeader>
                 <CardContent className="p-6 flex flex-col items-center justify-center text-center space-y-6">
-                  <p className="text-muted-foreground text-sm font-medium">Explore the raw repository data directly on GitHub for more insights.</p>
-                  <a
-                    href={`https://github.com/${repoData.owner}/${repoData.repo}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98]"
-                  >
-                    <Github className="h-5 w-5" />
-                    GitHub Source
-                    <ExternalLink className="h-4 w-4 opacity-50" />
-                  </a>
+                  {repoData.owner === "local" ? (
+                    <>
+                      <p className="text-muted-foreground text-sm font-medium">Explore the raw repository data directly on your local machine.</p>
+                      <div className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-xl bg-secondary text-secondary-foreground font-bold shadow-lg border shadow-secondary/10">
+                        <FolderGit2 className="h-5 w-5" />
+                        Local Repository
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-muted-foreground text-sm font-medium">Explore the raw repository data directly on GitHub for more insights.</p>
+                      <a
+                        href={`https://github.com/${repoData.owner}/${repoData.repo}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98]"
+                      >
+                        <Github className="h-5 w-5" />
+                        GitHub Source
+                        <ExternalLink className="h-4 w-4 opacity-50" />
+                      </a>
+                    </>
+                  )}
                 </CardContent>
               </Card>
             </div>
           </div>
         )}
       </main>
+
+      {/* Warnings & Tips Section */}
+      <section className="border-t bg-muted/10 px-6 md:px-12 py-10 mt-4">
+        <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-4">
+
+          {/* Info */}
+          <div className="flex gap-3 p-4 rounded-2xl border bg-blue-500/5 border-blue-500/20">
+            <div className="mt-0.5 shrink-0 w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center">
+              <Info className="h-4 w-4 text-blue-500" />
+            </div>
+            <div>
+              <p className="text-[11px] font-black uppercase tracking-wider text-blue-500 mb-1">Note</p>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                For local repos, up to <strong className="text-foreground">100 branches</strong> and <strong className="text-foreground">5000 commits</strong> are visualized. Very large repositories may take a moment to render.
+              </p>
+            </div>
+          </div>
+
+          {/* Data Completeness Warning */}
+          <div className="flex gap-3 p-4 rounded-2xl border bg-orange-500/5 border-orange-500/20">
+            <div className="mt-0.5 shrink-0 w-8 h-8 rounded-full bg-orange-500/10 flex items-center justify-center">
+              <svg className="h-4 w-4 text-orange-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
+            <div>
+              <p className="text-[11px] font-black uppercase tracking-wider text-orange-500 mb-1">Partial Data</p>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                This visualization shows a <strong className="text-foreground">subset of your repository</strong>. Commits beyond the 5000 limit or branches beyond 100 are <strong className="text-foreground">not included</strong>. Stats and graphs may not reflect the full project history.
+              </p>
+            </div>
+          </div>
+
+          {/* Warning */}
+          <div className="flex gap-3 p-4 rounded-2xl border bg-amber-500/5 border-amber-500/20">
+            <div className="mt-0.5 shrink-0 w-8 h-8 rounded-full bg-amber-500/10 flex items-center justify-center">
+              <svg className="h-4 w-4 text-amber-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            </div>
+            <div>
+              <p className="text-[11px] font-black uppercase tracking-wider text-amber-500 mb-1">Warning</p>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Merge lines for <strong className="text-foreground">deleted branches</strong> are reconstructed from commit message text only. They may not appear if the merge used a non-standard message format.
+              </p>
+            </div>
+          </div>
+
+          {/* Caution / Privacy */}
+          <div className="flex gap-3 p-4 rounded-2xl border bg-red-500/5 border-red-500/20">
+            <div className="mt-0.5 shrink-0 w-8 h-8 rounded-full bg-red-500/10 flex items-center justify-center">
+              <svg className="h-4 w-4 text-red-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            </div>
+            <div>
+              <p className="text-[11px] font-black uppercase tracking-wider text-red-500 mb-1">Caution</p>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Local analysis runs entirely on <strong className="text-foreground">your machine</strong>. No repository data is uploaded or shared. Only metadata is read from the <code className="font-mono text-[10px] bg-muted px-1 rounded">.git</code> folder.
+              </p>
+            </div>
+          </div>
+
+        </div>
+      </section>
 
       <footer className="border-t py-12 mt-20 bg-muted/20">
         <div className="w-full px-12 text-center space-y-4">
