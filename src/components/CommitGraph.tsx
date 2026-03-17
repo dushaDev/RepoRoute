@@ -378,28 +378,32 @@ export function CommitGraph({ commits, branches }: CommitGraphProps) {
                                         </>
                                     )}
 
-                                    {/* Branch Head Tags - Compacted */}
+                                    {/* Branch Head Tags - Compact chips beside node */}
                                     {heads.length > 0 && (
-                                        <g transform={`translate(${x + 10}, ${y - 8})`}>
+                                        <g transform={`translate(${x + nodeRadius + 5}, ${y - 5})`}>
                                             {heads.map((hName, hIdx) => {
                                                 const branchLane = Array.from(laneMap.entries()).find(([n]) => n === hName)?.[1] ?? 0;
                                                 const bColor = getLaneColor(branchLane);
+                                                const displayName = hName.startsWith('__merged__')
+                                                    ? hName.replace('__merged__', '').split('/').pop() + ' ·del'
+                                                    : (hName.length > 10 ? hName.substring(0, 9) + '..' : hName);
                                                 return (
-                                                    <g key={`head-${commit.sha}-${hName}`} transform={`translate(0, ${hIdx * 18})`}>
+                                                    <g key={`head-${commit.sha}-${hName}`} transform={`translate(0, ${hIdx * 13})`}>
                                                         <rect
-                                                            rx={3}
-                                                            width={Math.min(hName.length * 6 + 12, 100)}
-                                                            height={14}
+                                                            rx={2}
+                                                            width={Math.min(displayName.length * 5 + 8, 80)}
+                                                            height={11}
                                                             fill={bColor}
-                                                            className="shadow-sm opacity-90"
+                                                            className="opacity-80"
                                                         />
                                                         <text
-                                                            x={5}
-                                                            y={10}
+                                                            x={4}
+                                                            y={8}
                                                             fill="white"
-                                                            className="text-[9px] font-bold capitalize tracking-wide leading-none pointer-events-none"
+                                                            style={{ fontSize: '7px', fontWeight: 700, letterSpacing: '0.02em' }}
+                                                            className="pointer-events-none"
                                                         >
-                                                            {hName.length > 15 ? hName.substring(0, 13) + '..' : hName}
+                                                            {displayName}
                                                         </text>
                                                     </g>
                                                 );
